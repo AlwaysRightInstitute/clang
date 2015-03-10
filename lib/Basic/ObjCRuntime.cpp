@@ -22,7 +22,7 @@ std::string ObjCRuntime::getAsString() const {
     llvm::raw_string_ostream Out(Result);
     Out << *this;
   }
-  return Result;  
+  return Result;
 }
 
 raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {
@@ -33,6 +33,7 @@ raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {
   case ObjCRuntime::GNUstep: out << "gnustep"; break;
   case ObjCRuntime::GCC: out << "gcc"; break;
   case ObjCRuntime::ObjFW: out << "objfw"; break;
+  case ObjCRuntime::Swifter: out << "swifter"; break;
   }
   if (value.getVersion() > VersionTuple(0)) {
     out << '-' << value.getVersion();
@@ -62,6 +63,8 @@ bool ObjCRuntime::tryParse(StringRef input) {
     kind = ObjCRuntime::FragileMacOSX;
   } else if (runtimeName == "ios") {
     kind = ObjCRuntime::iOS;
+  } else if (runtimeName == "swifter") {
+    kind = ObjCRuntime::Swifter;
   } else if (runtimeName == "gnustep") {
     // If no version is specified then default to the most recent one that we
     // know about.

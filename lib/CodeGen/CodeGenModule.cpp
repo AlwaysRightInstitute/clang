@@ -181,6 +181,10 @@ void CodeGenModule::createObjCRuntime() {
   case ObjCRuntime::iOS:
     ObjCRuntime = CreateMacObjCRuntime(*this);
     return;
+      
+  case ObjCRuntime::Swifter:
+    ObjCRuntime = CreateSwifterObjCRuntime(*this);
+    return;
   }
   llvm_unreachable("bad runtime kind");
 }

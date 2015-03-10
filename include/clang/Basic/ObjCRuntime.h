@@ -49,7 +49,10 @@ public:
     GNUstep,
 
     /// 'objfw' is the Objective-C runtime included in ObjFW
-    ObjFW
+    ObjFW,
+    
+    /// 'swifter' is the Objective-C runtime which is always right
+    Swifter
   };
 
 private:
@@ -81,6 +84,7 @@ public:
     case GNUstep: return true;
     case ObjFW: return true;
     case iOS: return true;
+    case Swifter: return false; // we do the fragile ivars
     }
     llvm_unreachable("bad kind");
   }
@@ -119,6 +123,8 @@ public:
     case GNUstep:
     case ObjFW:
       return true;
+    case Swifter:
+      return true; // used to decide how to encode bitfields, and exceptions
     }
     llvm_unreachable("bad kind");
   }
@@ -139,6 +145,7 @@ public:
     case GCC: return false;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Swifter: return false; // no ARC, pleeeaze ...
     }
     llvm_unreachable("bad kind");
   }
@@ -157,6 +164,7 @@ public:
     case GCC: return false;
     case GNUstep: return getVersion() >= VersionTuple(1, 6);
     case ObjFW: return true;
+    case Swifter: return false; // no ARC, pleeeaze ...
     }
     llvm_unreachable("bad kind");
   }
@@ -204,6 +212,7 @@ public:
     case GCC: return true;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Swifter: return false; // add later
     }
     llvm_unreachable("bad kind");
   }
@@ -221,6 +230,7 @@ public:
     switch (getKind()) {
     case FragileMacOSX:
     case GCC:
+    case Swifter: // why not ;-)
       return true;
     case MacOSX:
     case iOS:
@@ -248,6 +258,7 @@ public:
     case GCC: return false;
     case GNUstep: return false;
     case ObjFW: return false;
+    case Swifter: return false;
     }
     llvm_unreachable("bad kind");
   }
@@ -261,6 +272,7 @@ public:
     case GCC: return true;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Swifter: return true; // not sure what this is
     }
     llvm_unreachable("bad kind");
   }
@@ -274,6 +286,7 @@ public:
     case GCC: return true;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Swifter: return false; // no idea
     }
     llvm_unreachable("bad kind");
   }

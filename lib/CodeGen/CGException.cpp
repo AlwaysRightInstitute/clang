@@ -189,6 +189,7 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
     // fallthrough
   case ObjCRuntime::GCC:
   case ObjCRuntime::ObjFW:
+  case ObjCRuntime::Swifter: // TODO
     return EHPersonality::GNU_ObjC;
   }
   llvm_unreachable("bad runtime kind");
@@ -224,6 +225,7 @@ static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
   // mixed EH.  Use the C++ personality just to avoid returning null.
   case ObjCRuntime::GCC:
   case ObjCRuntime::ObjFW: // XXX: this will change soon
+  case ObjCRuntime::Swifter: // TODO
     return EHPersonality::GNU_ObjC;
   case ObjCRuntime::GNUstep:
     return EHPersonality::GNU_ObjCXX;

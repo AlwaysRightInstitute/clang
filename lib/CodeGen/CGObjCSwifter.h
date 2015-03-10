@@ -1,7 +1,7 @@
 // (C) 2015 Helge Hess
 // Derived from other runtime files.
 
-#include "CGObjCSwifter.h"
+#include "CGObjCSwifterVirtual.h"
 
 using namespace clang;
 using namespace CodeGen;

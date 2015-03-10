@@ -261,12 +261,46 @@ file groups and such will be gone.
 
 #### Step 2: Hook up the new runtime class to the driver
 
-Upcoming ...
+OK, now we have our abort'y implementation of a new ObjC runtime backend. When
+compiling a file, we need to tell Clang that we want to use it.
+To select the runtime, Clang uses the `-fobjc-runtime=xyz` option, e.g.
+`-fobjc-runtime=gnustep` or `-fobjc-runtime=ios`.
+What we want is `-fobjc-runtime=swifter`.
+
+In Clang this spreads out over various files with plenty of redundancy. But the
+core is the ObjCRuntime.Kind enum in 
+[ObjCRuntime.h](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/include/clang/Basic/ObjCRuntime.h)
+class of the Basic library (so much for the famous Clang 'modularity' ...).
+*Important*: This class just represents the capabilities of a specific runtime
+version, do *not* mix it up with the `CGObjCRuntime` class, which is the
+base class for the ObjC code generator.
+This object is accessed in various places within Clang, usually in a codepath like:
+    
+    if (LangOpts.ObjC1) {
+      if (LangOpts.ObjCRuntime.isNonFragile()) {
+        Builder.defineMacro("__OBJC2__");
+
+See the git commit for the details, but those are files we patch just to add
+Swifter to the enum:
+[ObjCRuntime.h](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/include/clang/Basic/ObjCRuntime.h),
+[ObjCRuntime.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/Basic/ObjCRuntime.cpp),
+[CGException.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGException.cpp),
+[CGObjCGNU.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCGNU.cpp),
+[CGObjCMac.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCMac.cpp),
+[CodeGenModule.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CodeGenModule.cpp).
+
+That's it. Add `-fobjc-runtime=swifter` to the Clang arguments in the Xcode
+scheme.
+This should make Cmd-r properly crash in the abort() call in
+CGObjCSwifterVirtual::ModuleInitFunction.
+
+Great. So know all the infrastructure is in place, we 'just' need to generate
+the code :-)
 
 
 ### To be continued ...
 
-Continue text here :-)
+Continue text here ;-)
 
 
 

@@ -7043,6 +7043,9 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
   case ObjCRuntime::GCC:
   case ObjCRuntime::ObjFW:
     llvm_unreachable("these runtimes are not Mac runtimes");
+      
+  case ObjCRuntime::Swifter: // why not? :-)
+    return CreateSwifterObjCRuntime(CGM);
   }
   llvm_unreachable("bad runtime");
 }
