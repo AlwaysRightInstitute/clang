@@ -244,6 +244,37 @@ crap to read as you can't see the type :-) Sample:
         << NamedVar.first << ':', ind + 1);
     }
 
+##### ampersand reference parameters
+
+You'll see a lot of objects being passed around by reference. Like:
+
+    static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM, ...) {
+      CGM.doThis()
+    }
+
+Instead of
+
+    static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule *CGM, ...) {
+      CGM->doThat()
+    }
+
+It's essentially the same.
+
+##### const'ness
+
+There is a lot of it. You know
+
+    const char * const ptr;
+
+Dangerous [const_cast](http://en.cppreference.com/w/cpp/language/const_cast)
+hack-a-round:
+
+    void SwifterHackMethodDeclIfNecessary
+      (CodeGen::CodeGenModule &cgm, const ObjCMethodDecl *cmethod)
+    {
+      ObjCMethodDecl *method = const_cast<ObjCMethodDecl *>(cmethod);
+    }
+
 ##### std::string
 
 This is the C++ string class (actually a template instance of
@@ -265,7 +296,7 @@ Just a pair of two objects. Sample:
     class VarExprAST : public ExprAST {
       std::vector<std::pair<std::string, ExprAST *> > VarNames;
 
-This is an array of a string/ptr pair.
+This is an array of string/ptr pairs.
 
 ##### std::vector
 
@@ -292,6 +323,11 @@ Sample:
     // Swift: if let ai as? AllocationInst { } ...
     if (AllocationInst *ai = dyn_cast<AllocationInst>(val))
       ..
+
+##### Iterators
+
+Quite honestly I didn't really get them yet. Must be similar to the Swift
+range stuff I assume :-)
 
 
 ### Funny Sidenotes
