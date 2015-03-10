@@ -236,15 +236,16 @@ This is the code generator.
 #### Step 1: Create a new generator class for the runtime
 
 Now Clang already comes with support for a set of different runtimes. Those
-are grouped into two families: Mac and GNU, which both have a set of variants
-(eg fragile vs non-fragile etc etc)
+are grouped into two families: Mac and GNU, both have a set of variants
+(eg fragile vs non-fragile etc.)
 
 The runtime specific code generation parts are separated out in subclasses of
 the 'CGObjCRuntime' class, e.g. there is CGObjCGCC (the runtime coming with the
 GCC compiler), CGObjCGNUstep (the modern GNUstep runtime), CGObjCObjFW (the
 runtime of the ObjFW kit).
 
-So, it is kinda obvious what we need to do first: Create a new runtime class.
+So, it is kinda obvious what we need to do first: Create a new runtime CodeGen
+class.
 
 Ours will be of neither family, it'll sideline both. Check the GIT commit to
 see what needs to be done. To avoid having to implement every single code
@@ -294,7 +295,7 @@ scheme.
 This should make Cmd-r properly crash in the abort() call in
 CGObjCSwifterVirtual::ModuleInitFunction.
 
-Great. So know all the infrastructure is in place, we 'just' need to generate
+Great. All the infrastructure is in place now, we 'just' need to generate
 the code :-)
 
 
