@@ -249,9 +249,14 @@ So, it is kinda obvious what we need to do first: Create a new runtime class.
 Ours will be of neither family, it'll sideline both. Check the GIT commit to
 see what needs to be done. To avoid having to implement every single code
 generator from the beginning, there is a base class which just contains the 
-'virtuals' of CGObjCRuntime, with an abort() (CGObjCSwifterVirtual.h).
-Our class itself lives in CGObjCSwifter.h/cpp. Right now it's rather empty.
+'virtuals' of CGObjCRuntime, with an abort() ([CGObjCSwifterVirtual.h](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCSwifterVirtual.h)).
+Our class itself lives in [CGObjCSwifter.h](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCSwifter.h)/[CGObjCSwifter.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCSwifter.cpp).
+Right now it's rather empty.
 
+To add the new class to the compilation process, add CGObjCSwifter.cpp to
+[CMakeLists.txt](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CMakeLists.txt).
+*Again*: Any change here is going to recreate your xcodeproj, all your own
+file groups and such will be gone.
 
 
 #### Step 2: Hook up the new runtime class to the driver
