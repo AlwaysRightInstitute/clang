@@ -522,6 +522,11 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
     if (LangOpts.ObjCRuntime.isNeXTFamily())
       Builder.defineMacro("__NEXT_RUNTIME__");
+    
+    if (LangOpts.ObjCRuntime.getKind() == ObjCRuntime::Swifter) {
+      Builder.defineMacro("__SWIFTER_RUNTIME__");
+      Builder.defineMacro("__ALWAYS_RIGHT__");
+    }
 
     if (LangOpts.ObjCRuntime.getKind() == ObjCRuntime::ObjFW) {
       VersionTuple tuple = LangOpts.ObjCRuntime.getVersion();

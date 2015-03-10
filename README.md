@@ -299,6 +299,31 @@ Great. All the infrastructure is in place now, we 'just' need to generate
 the code :-)
 
 
+#### Step 3: Add a macro for conditional compilation
+
+Something easy next. The source should be able to detect whether the Swifter
+runtime is in use. Like that:
+
+    #if __SWIFTER_RUNTIME__
+    + (BOOL)isActuallySwift { return YES; }
+    #elif __NEXT_RUNTIME__
+    + (BOOL)isActuallySwift { return KINDA_REALLY_SWIFT; }
+    #endif
+
+Let's hack this in. Easy enough, this is in
+Clang Libraries / clangFrontend /
+[InitPreprocessor.cpp](https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/Frontend/InitPreprocessor.cpp). Look for `__NEXT_RUNTIME__`.
+
+To try whether it works, add some non-sense like
+
+    #if __SWIFTER_RUNTIME__
+      always right it is
+    #endif
+
+to the ~/hack-a-clang/hello.m and Cmd-r in Xcode. This should now stop the
+compiler due to a syntax error, instead of crashing in our abort().
+
+
 ### To be continued ...
 
 Continue text here ;-)
