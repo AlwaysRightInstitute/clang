@@ -220,6 +220,45 @@ Others:
 - [Creating and using Clang plugin with Xcode](http://railsware.com/blog/2014/02/28/creation-and-using-clang-plugin-with-xcode/)
 - [Create a working compiler with the LLVM framework](http://www.ibm.com/developerworks/library/os-createcompilerllvm1/), [Part2](http://www.ibm.com/developerworks/library/os-createcompilerllvm2/)
 
+
+### Hack in a new runtime
+
+Let's start hacking in support for a new runtime. As mentioned the primary
+thing which needs to be adjusted is the code generator which transforms
+the AST into LLVM IR.
+
+Open the Xcode project and browse to:
+
+    Sources / Clang libraries / clangCodeGen / Source Files
+
+This is the code generator.
+
+#### Step 1: Create a new generator class for the runtime
+
+Now Clang already comes with support for a set of different runtimes. Those
+are grouped into two families: Mac and GNU, which both have a set of variants
+(eg fragile vs non-fragile etc etc)
+
+The runtime specific code generation parts are separated out in subclasses of
+the 'CGObjCRuntime' class, e.g. there is CGObjCGCC (the runtime coming with the
+GCC compiler), CGObjCGNUstep (the modern GNUstep runtime), CGObjCObjFW (the
+runtime of the ObjFW kit).
+
+So, it is kinda obvious what we need to do first: Create a new runtime class.
+
+Ours will be of neither family, it'll sideline both. Check the GIT commit to
+see what needs to be done. To avoid having to implement every single code
+generator from the beginning, there is a base class which just contains the 
+'virtuals' of CGObjCRuntime, with an abort() (CGObjCSwifterVirtual.h).
+Our class itself lives in CGObjCSwifter.h/cpp. Right now it's rather empty.
+
+
+
+#### Step 2: Hook up the new runtime class to the driver
+
+Upcoming ...
+
+
 ### To be continued ...
 
 Continue text here :-)
@@ -232,6 +271,17 @@ Continue text here :-)
 Given that you are working on something Objective-C, there is a good chance you
 might miss some C++ basics. And Clang is using pretty much any feature C++
 provides.
+
+##### private namespaces
+
+If you see a namespace declaration w/o a name like this:
+
+    namespace {
+      ...
+    }
+
+it creates a 'private' namespace. Think of it like 'static' in C. The contents
+will only be visible in the current translation unit.
 
 ##### auto
 

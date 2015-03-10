@@ -52,6 +52,7 @@ add_clang_library(clangCodeGen
   CGObjCGNU.cpp
   CGObjCMac.cpp
   CGObjCRuntime.cpp
+  CGObjCSwifter.cpp
   CGOpenCLRuntime.cpp
   CGOpenMPRuntime.cpp
   CGRecordLayoutBuilder.cpp
