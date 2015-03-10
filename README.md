@@ -15,9 +15,10 @@ Now Clang claims to be a very modular and easy to hack C compiler (specifically
 compared to GCC). Let's see how it goes ... ;->
 
 Recommendation: If you want to understand Swift, it is a really good idea to
-read through the LLVM tutorials. It gives you an insight on where they are
-coming from. Pretty much the same reason why it's a good idea to have a basic
-understanding of assembler when you are working in C, or of the JVM when you do
+read through the LLVM tutorials.
+It gives you an insight on where they are coming from. Pretty much the same
+reason why it's a good idea to have a basic understanding of assembler when you
+are working in C, Smalltalk when you do Objective-C or of the JVM when you do
 Java.
 
 
