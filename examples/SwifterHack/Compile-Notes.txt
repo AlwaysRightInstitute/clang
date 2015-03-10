@@ -1,0 +1,53 @@
+MAKE
+****
+
+COMPILE:
+
+/usr/bin/c++ -DCLANG_ENABLE_ARCMT -DCLANG_ENABLE_OBJC_REWRITER \
+  -DCLANG_ENABLE_STATIC_ANALYZER -DGTEST_HAS_RTTI=0 -D_GNU_SOURCE \
+  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -fPIC \
+  -fvisibility-inlines-hidden -std=c++11 -fno-common -Woverloaded-virtual \
+  -fno-strict-aliasing -pedantic -Wno-long-long -Wno-nested-anon-types -g -fPIC\
+  -I$HOME/hack-a-clang/build-clang-make/examples/SwifterHack \
+  -I$HOME/hack-a-clang/clang/examples/SwifterHack \
+  -I$HOME/hack-a-clang/clang/include \
+  -I$HOME/hack-a-clang/build-clang-make/include \
+  -I$HOME/hack-a-clang/build-llvm/include \
+  -I$HOME/hack-a-clang/llvm/include -fno-exceptions -fno-rtti \
+  -o CMakeFiles/SwifterHack.dir/SwifterHackConsumer.cpp.o \
+  -c $HOME/hack-a-clang/clang/examples/SwifterHack/SwifterHackConsumer.cpp
+
+LINK:
+
+/usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_link_script CMakeFiles/SwifterHack.dir/link.txt --verbose=
+
+LINK.txt
+/usr/bin/c++   -fPIC -fvisibility-inlines-hidden -std=c++11 -fno-common -Woverloaded-virtual -fno-strict-aliasing -pedantic -Wno-long-long -Wno-nested-anon-types -g -bundle -Wl,-headerpad_max_install_names  -Wl,-dead_strip -Wl,-exported_symbols_list,$HOME/hack-a-clang/build-clang-make/examples/SwifterHack/SwifterHack.exports  -Wl,-flat_namespace -Wl,-undefined -Wl,suppress -o ../../lib/SwifterHack.dylib CMakeFiles/SwifterHack.dir/SwifterHack.cpp.o CMakeFiles/SwifterHack.dir/SwifterHackConsumer.cpp.o CMakeFiles/SwifterHack.dir/SwifterHackVisitor.cpp.o  -L$HOME/hack-a-clang/build-llvm/lib 
+
+
+
+make -n gives:
+
+/usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_progress_start $HOME/hack-a-clang/build-clang-make/CMakeFiles 0
+
+make SHELL="/bin/bash -x" target
+
+Scanning dependencies of target SwifterHack
++ /Applications/Xcode.app/Contents/Developer/usr/bin/make -f examples/SwifterHack/CMakeFiles/SwifterHack.dir/build.make examples/SwifterHack/CMakeFiles/SwifterHack.dir/build
+
++ /usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_progress_report $HOME/hack-a-clang/build-clang-make/CMakeFiles
+[100%] 
++ /usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_echo_color --switch= --green 'Building CXX object examples/SwifterHack/CMakeFiles/SwifterHack.dir/SwifterHackConsumer.cpp.o'
+Building CXX object examples/SwifterHack/CMakeFiles/SwifterHack.dir/SwifterHackConsumer.cpp.o
+
++ cd $HOME/hack-a-clang/build-clang-make/examples/SwifterHack
+
++ /usr/bin/c++ -DCLANG_ENABLE_ARCMT -DCLANG_ENABLE_OBJC_REWRITER -DCLANG_ENABLE_STATIC_ANALYZER -DGTEST_HAS_RTTI=0 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -fPIC -fvisibility-inlines-hidden -std=c++11 -fno-common -Woverloaded-virtual -fno-strict-aliasing -pedantic -Wno-long-long -Wno-nested-anon-types -g -fPIC -I$HOME/hack-a-clang/build-clang-make/examples/SwifterHack -I$HOME/hack-a-clang/clang/examples/SwifterHack -I$HOME/hack-a-clang/clang/include -I$HOME/hack-a-clang/build-clang-make/include -I$HOME/hack-a-clang/build-llvm/include -I$HOME/hack-a-clang/llvm/include -fno-exceptions -fno-rtti -o CMakeFiles/SwifterHack.dir/SwifterHackConsumer.cpp.o -c $HOME/hack-a-clang/clang/examples/SwifterHack/SwifterHackConsumer.cpp
++ /usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_echo_color --switch= --red --bold 'Linking CXX shared module ../../lib/SwifterHack.dylib'
+Linking CXX shared module ../../lib/SwifterHack.dylib
++ cd $HOME/hack-a-clang/build-clang-make/examples/SwifterHack
++ /usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_link_script CMakeFiles/SwifterHack.dir/link.txt --verbose=
++ /usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_progress_report $HOME/hack-a-clang/build-clang-make/CMakeFiles
+[100%] + echo 'Built target SwifterHack'
+Built target SwifterHack
++ /usr/local/Cellar/cmake/3.1.1_1/bin/cmake -E cmake_progress_start $HOME/hack-a-clang/build-clang-make/CMakeFiles 0

@@ -7,6 +7,8 @@ process, not the actual implementation.
 Let's see whether I have the persistence to complete this 'tutorial' ;-)
 Feedback is welcome.
 
+**PLUGIN BRANCH**. Just a branch to try a plugin. Do not use.
+
 ### Intro
 
 Assume you came up with your own, personal, Objective-C runtime. All you miss is
@@ -220,9 +222,12 @@ Others:
 - [Creating and using Clang plugin with Xcode](http://railsware.com/blog/2014/02/28/creation-and-using-clang-plugin-with-xcode/)
 - [Create a working compiler with the LLVM framework](http://www.ibm.com/developerworks/library/os-createcompilerllvm1/), [Part2](http://www.ibm.com/developerworks/library/os-createcompilerllvm2/)
 
-### To be continued ...
 
-Continue text here :-)
+
+## To be continued ...
+
+OK, this branch just contains a trivial Clang plugin. Just to see how it goes,
+doesn't actually do anything useful.
 
 
 

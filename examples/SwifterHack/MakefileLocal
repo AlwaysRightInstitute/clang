@@ -1,0 +1,63 @@
+# hh
+
+
+# DOES NOT WORK YET
+
+OBJECTS = \
+  SwifterHackAction.o \
+	SwifterHackConsumer.o \
+	SwifterHackVisitor.o
+
+
+CLANG_LEVEL := ../..
+LIBRARYNAME = SwifterHack
+
+LINK_LIBS_IN_SHARED = 0
+LOADABLE_MODULE = 1
+
+ifeq ($(OS),Darwin)
+  LDFLAGS=-Wl,-undefined,dynamic_lookup
+endif
+
+CXX="/usr/bin/c++"
+
+PROJECTS_DIR  := $(HOME)/hack-a-clang
+CLANG_SRCDIR  := $(PROJECTS_DIR)/clang
+CLANG_BUILDIR := $(PROJECTS_DIR)/clang-build
+LLVM_SRCDIR   := $(PROJECTS_DIR)/llvm
+LLVM_BUILDIR  := $(PROJECTS_DIR)/llvm-build
+
+PLUGIN_SRCDIR   := $(CLANG_SRCDIR)/examples/$(LIBRARYNAME)
+PLUGIN_BUILDDIR := $(CLANG_BUILDIR)/examples/$(LIBRARYNAME)
+
+INCLUDEDIRS = \
+	-I$(PLUGIN_BUILDDIR) -I$(PLUGIN_SRCDIR) \
+	-I$(CLANG_SRCDIR)/include -I$(CLANG_BUILDIR)/include \
+	-I$(LLVM_BUILDIR)/include -I$(LLVM_SRCDIR)/include
+
+CPPFLAGS = \
+  -DCLANG_ENABLE_ARCMT -DCLANG_ENABLE_OBJC_REWRITER \
+	-DCLANG_ENABLE_STATIC_ANALYZER -DGTEST_HAS_RTTI=0 \
+	-D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS \
+	-D__STDC_LIMIT_MACROS -fPIC -fvisibility-inlines-hidden \
+	-std=c++11 -fno-common -Woverloaded-virtual -fno-strict-aliasing \
+	-pedantic -Wno-long-long -Wno-nested-anon-types \
+	-g -fPIC -fno-exceptions -fno-rtti 
+
+%.o : %.cpp
+	$(CXX) $(CPPFLAGS) $(INCLUDEDIRS) -o $@ -c $<
+
+
+# targets
+
+all : objects
+	echo "Link via ccmake"
+
+objects : $(OBJECTS)
+
+clean :
+	rm $(OBJECTS)
+
+
+#-o CMakeFiles/SwifterHack.dir/SwifterHackConsumer.cpp.o \
+    -c $HOME/hack-a-clang/clang/examples/SwifterHack/SwifterHackConsumer.cpp
