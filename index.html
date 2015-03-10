@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>Clang by AlwaysRightInstitute</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Clang</h1>
+        <h2>Mirror of official clang git repository located at http://llvm.org/git/clang.  Updated every five minutes.</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/AlwaysRightInstitute/clang/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/AlwaysRightInstitute/clang/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/AlwaysRightInstitute/clang" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a id="clang-swifter" class="anchor" href="#clang-swifter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Clang-Swifter</h1>
+
+<p>Hack-add a simple thirdparty Objective-C runtime to Clang. Documents just the
+process, not the actual implementation.</p>
+
+<p>Let's see whether I have the persistence to complete this 'tutorial' ;-)
+Feedback is welcome.</p>
+
+<h3>
+<a id="intro" class="anchor" href="#intro" aria-hidden="true"><span class="octicon octicon-link"></span></a>Intro</h3>
+
+<p>Assume you came up with your own, personal, Objective-C runtime. All you miss is
+a decent compiler ...
+Now Clang claims to be a very modular and easy to hack C compiler (specifically
+compared to GCC). Let's see how it goes ... ;-&gt;</p>
+
+<p>Recommendation: If you want to understand Swift, it is a really good idea to
+read through the LLVM tutorials. It gives you an insight on where they are
+coming from. Pretty much the same reason why it's a good idea to have a basic
+understanding of assembler when you are working in C, or of the JVM when you do
+Java.</p>
+
+<h3>
+<a id="setup-xcode-dev-environment" class="anchor" href="#setup-xcode-dev-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setup Xcode dev environment</h3>
+
+<p>We want to code the Clang stuff in Xcode, mostly for the debugger. This
+is easy to setup because the LLVM/Clang built system is based on 
+<a href="http://www.cmake.org">Cmake</a>.
+Cmake is a makefile generator, which can generate Makefiles, VisualStudio
+projects, and Xcode ones. Not in a particulary good way, but OK.</p>
+
+<p>OSX doesn't come with cmake included, so I'd recommend to install it via
+<a href="http://brew.sh">Homebrew</a>:</p>
+
+<pre><code>brew install cmake
+</code></pre>
+
+<p>Next checkout LLVM and Clang, in <em>separate</em> directories. Not in one as suggested
+by the Clang <a href="http://clang.llvm.org/get_started.html">online documentation</a>.
+Both repositories are BIG (LLVM 326MB, Clang 177MB!).
+I also suggest checking out a specific release branch (I chose release_36), as
+Clang trunk is a moving target (even the release branches receive updates).</p>
+
+<pre><code>cd ~
+mkdir hack-a-clang
+cd hack-a-clang
+
+git clone -b release_36 http://llvm.org/git/llvm.git
+git clone -b release_36 http://llvm.org/git/clang.git
+
+cd llvm/projects
+git clone -b release_36 http://llvm.org/git/compiler-rt.git
+cd ../..
+</code></pre>
+
+<p>Next we create an LLVM build directory, let cmake create Makefiles and build
+Clang.</p>
+
+<pre><code>cd ~/hack-a-clang
+mkdir llvm-build
+cd llvm-build
+
+cmake -G "Unix Makefiles" -DLLVM_ENABLE_CXX1Y:BOOL=OFF ../llvm
+  # throws warning, which we choose to ignore
+
+time make -s -j 8
+  # grab ☕️, then another ☕️ and one more ☕️
+</code></pre>
+
+<p>And go ahead to Clang. You can build Clang using makefiles like above, but
+we want to hack in Xcode. <em>Important</em>: Don't forget to setup the path to point
+to the LLVM bin directory.
+Looks like this:</p>
+
+<pre><code>cd ~/hack-a-clang
+export PATH="`pwd`/llvm-build/bin:${PATH}"
+mkdir clang-build
+cd clang-build
+
+cmake -G "Xcode" ../clang
+  # throws warning, which we choose to ignore
+
+time xcodebuild -target clang
+  # grab ☕️, then another ☕️ and one more ☕️
+</code></pre>
+
+<p>In case this worked right, you can now test Clang. This includes a set of
+useful calls to the clang binary:</p>
+
+<pre><code>cd ~/hack-a-clang
+export PATH="`pwd`/clang-build/Debug/bin:${PATH}"
+echo 'main() { printf("Hello World!\n"); return 0; }' &gt; hello.m
+
+which clang # check it's picking up your clang
+  # e.g. /Users/helge/hack-a-clang/clang-build/Debug/bin/clang
+
+clang --help
+clang hello.m -fsyntax-only
+clang hello.m -S -emit-llvm -o - # print LLVM assembly code for hello.c
+clang hello.m -S -emit-llvm -O3 -o -
+clang hello.m -S -O3 -o -        # Intel assembly code (compiled by LLVM)
+clang -Xclang -ast-dump -fsyntax-only hello.m
+</code></pre>
+
+<p>If all is good, you can fire up clang in Xcode:</p>
+
+<pre><code>cd ~/hack-a-clang
+cd clang-build
+open Clang.xcodeproj
+  # while Xcode indexes the source, grab ☕️, then another ☕️
+</code></pre>
+
+<p>The project is HUGE. First, switch the target from 'ALL_BUILD' to 'clang'
+(somewhere at the bottom of the list).</p>
+
+<p><strong>Important</strong>: Everytime cmake detects something it considers a change, it'll
+regenerate your Xcode project. So while you can setup new groups and such in
+Xcode, this is a lossy process. Don't invest too much time into that.</p>
+
+<p>Next, lets setup Xcode for debugging. Go to the target popup and select
+'Edit Scheme'. In the 'Run' section add those arguments:</p>
+
+<pre><code>-cc1
+$(HOME)/hack-a-clang/hello.m
+-S
+-emit-llvm
+-o -
+</code></pre>
+
+<p>Press Cmd-r to run it, and it should output the LLVM code for hello.m.</p>
+
+<p>Great, we have a working development environment.</p>
+
+<h3>
+<a id="intro-2" class="anchor" href="#intro-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Intro 2</h3>
+
+<p>So what is Clang. Clang is a set of things. It's a preprocessor system,
+it is a C/C++/ObjC/ObjC++ parser and code generator. And it is a 'compiler
+driver', aka the shell tool which wraps the compilation stages. The latter
+makes the whole thing a bit weird, because both, the compiler and the driver
+are named 'clang'.</p>
+
+<p>So the steps performed by the driver (when you call 'clang hello.m -o hello')
+are essentially:</p>
+
+<ul>
+<li>take a file to compile</li>
+<li>scan &amp; preprocess it (convert source text into tokens)</li>
+<li>parse it into an AST (a tree representation of the source),
+this is actually two separate modules in clang:
+
+<ul>
+<li>the parser (detect token sequences, feed the Sema)</li>
+<li>the Sema (semantic analyzer), which constructs the AST</li>
+</ul>
+</li>
+<li>CodeGen: emit LLVM IR code from the AST</li>
+<li>let LLVM compile the IR</li>
+<li>link the native code</li>
+</ul>
+
+<p>To generate Objective-C code, the code generation needs to be adjusted. It
+takes the AST and emits the LLVM IR (intermediate representation) code for this.
+In the case of Objective-C this is stuff like message sends <code>[obj doIt]</code>,
+runtime meta data, or class/selector lookups (e.g. <code>@selector(doIt:)</code>).</p>
+
+<p>Remember that I said that 'clang' is both the driver executable and the
+compiler? That turns out to be very confusing when you use the web to search
+for options the tools take ... If you run 'clang' from the 'bin' build
+directory, you run the driver.
+If you want to pass options to the compiler, there are two ways to do it.
+Either prepend every option with -Xclang:</p>
+
+<pre><code>clang -Xclang -ast-dump -fsyntax-only hello.m
+</code></pre>
+
+<p>or invoke the compiler directly via -cc1, eg:</p>
+
+<pre><code>clang -cc1 -ast-dump hello.m
+</code></pre>
+
+<h3>
+<a id="reading-materials" class="anchor" href="#reading-materials" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reading Materials</h3>
+
+<p>Upfront: When working on stuff like this I always take notes in
+<a href="https://plausible.coop/voodoopad/">VoodooPad</a>.
+I paste in links, I paste in sample source code, I take notes in it. All
+automagically cross linked.</p>
+
+<p>OK, below a set of links which you might want to read.</p>
+
+<h4>
+<a id="llvm" class="anchor" href="#llvm" aria-hidden="true"><span class="octicon octicon-link"></span></a>LLVM</h4>
+
+<p>You should definitely read through the
+<a href="http://llvm.org/docs/tutorial/">Kaleidoscope tutorial</a>.
+It gives you a solid understanding of how to write a simple compiler which
+targets LLVM.</p>
+
+<p>JIT tutorial: <a href="http://llvm.org/releases/2.6/docs/tutorial/JITTutorial1.html">A first function</a> and
+<a href="http://llvm.org/releases/2.6/docs/tutorial/JITTutorial2.html">A more complicated function</a>.
+Pretty good.</p>
+
+<p>Another great one is
+<a href="http://llvm.lyngvig.org/Articles/Mapping-High-Level-Constructs-to-LLVM-IR">Mapping High-Level Constructs to LLVM IR</a>,
+which shows how C/C++ constructs look in LLVM assembly (IR) code.
+Note that this one is different from Kaleidoscope in that it doesn't show
+how you create the IR at runtime. It shows the textual representation.</p>
+
+<p>LLVM IR is build around something called SSA - short for
+<a href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static single assignment form</a>,
+you'll see references to this all over the place.
+Don't be too afraid when reading the article, you don't have to understand too
+much of it. Just remember that there is something called a 'Phi' function.</p>
+
+<p>Advanced, look at this later:</p>
+
+<ul>
+<li>getelementptr instruction (GEP)
+
+<ul>
+<li><a href="http://llvm.org/docs/GetElementPtr.html">http://llvm.org/docs/GetElementPtr.html</a></li>
+<li><a href="http://llvm.org/docs/LangRef.html#getelementptr-instruction">http://llvm.org/docs/LangRef.html#getelementptr-instruction</a></li>
+</ul>
+</li>
+</ul>
+
+<h4>
+<a id="clang" class="anchor" href="#clang" aria-hidden="true"><span class="octicon octicon-link"></span></a>Clang</h4>
+
+<p>Clang hacking docu: <a href="http://clang.llvm.org/hacking.html">Hacking on Clang</a></p>
+
+<p><a href="https://kevinaboos.wordpress.com/2013/07/23/clang-tutorial-part-i-introduction/">Kevin Boos Tutorial</a>,
+in three parts. Very nice.
+Note: this talks about Clang plugins and tooling. Which is absolutely worth
+reading (do it!), but neither technology is suitable for implementing a new
+runtime backend. For that you actually have to hack clang.</p>
+
+<p><a href="http://clang.llvm.org/docs/IntroductionToTheClangAST.html">Introduction to the Clang AST</a>,
+OK to scan it, I didn't watch the video.</p>
+
+<p>Others:</p>
+
+<ul>
+<li><a href="http://www.codergears.com/Blog/?p=679">What makes Clang so special</a></li>
+<li><a href="http://railsware.com/blog/2014/02/28/creation-and-using-clang-plugin-with-xcode/">Creating and using Clang plugin with Xcode</a></li>
+<li>
+<a href="http://www.ibm.com/developerworks/library/os-createcompilerllvm1/">Create a working compiler with the LLVM framework</a>, <a href="http://www.ibm.com/developerworks/library/os-createcompilerllvm2/">Part2</a>
+</li>
+</ul>
+
+<h3>
+<a id="hack-in-a-new-runtime" class="anchor" href="#hack-in-a-new-runtime" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hack in a new runtime</h3>
+
+<p>Let's start hacking in support for a new runtime. As mentioned the primary
+thing which needs to be adjusted is the code generator which transforms
+the AST into LLVM IR.</p>
+
+<p>Open the Xcode project and browse to:</p>
+
+<pre><code>Sources / Clang libraries / clangCodeGen / Source Files
+</code></pre>
+
+<p>This is the code generator.</p>
+
+<h4>
+<a id="step-1-create-a-new-generator-class-for-the-runtime" class="anchor" href="#step-1-create-a-new-generator-class-for-the-runtime" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 1: Create a new generator class for the runtime</h4>
+
+<p>Now Clang already comes with support for a set of different runtimes. Those
+are grouped into two families: Mac and GNU, both have a set of variants
+(eg fragile vs non-fragile etc.)</p>
+
+<p>The runtime specific code generation parts are separated out in subclasses of
+the 'CGObjCRuntime' class, e.g. there is CGObjCGCC (the runtime coming with the
+GCC compiler), CGObjCGNUstep (the modern GNUstep runtime), CGObjCObjFW (the
+runtime of the ObjFW kit).</p>
+
+<p>So, it is kinda obvious what we need to do first: Create a new runtime CodeGen
+class.</p>
+
+<p>Ours will be of neither family, it'll sideline both. Check the GIT commit to
+see what needs to be done. To avoid having to implement every single code
+generator from the beginning, there is a base class which just contains the 
+'virtuals' of CGObjCRuntime, with an abort() (<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCSwifterVirtual.h">CGObjCSwifterVirtual.h</a>).
+Our class itself lives in <a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCSwifter.h">CGObjCSwifter.h</a>/<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCSwifter.cpp">CGObjCSwifter.cpp</a>.
+Right now it's rather empty.</p>
+
+<p>To add the new class to the compilation process, add CGObjCSwifter.cpp to
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CMakeLists.txt">CMakeLists.txt</a>.
+<em>Again</em>: Any change here is going to recreate your xcodeproj, all your own
+file groups and such will be gone.</p>
+
+<h4>
+<a id="step-2-hook-up-the-new-runtime-class-to-the-driver" class="anchor" href="#step-2-hook-up-the-new-runtime-class-to-the-driver" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 2: Hook up the new runtime class to the driver</h4>
+
+<p>OK, now we have our abort'y implementation of a new ObjC runtime backend. When
+compiling a file, we need to tell Clang that we want to use it.
+To select the runtime, Clang uses the <code>-fobjc-runtime=xyz</code> option, e.g.
+<code>-fobjc-runtime=gnustep</code> or <code>-fobjc-runtime=ios</code>.
+What we want is <code>-fobjc-runtime=swifter</code>.</p>
+
+<p>In Clang this spreads out over various files with plenty of redundancy. But the
+core is the ObjCRuntime.Kind enum in 
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/include/clang/Basic/ObjCRuntime.h">ObjCRuntime.h</a>
+class of the Basic library (so much for the famous Clang 'modularity' ...).
+<em>Important</em>: This class just represents the capabilities of a specific runtime
+version, do <em>not</em> mix it up with the <code>CGObjCRuntime</code> class, which is the
+base class for the ObjC code generator.
+This object is accessed in various places within Clang, usually in a codepath like:</p>
+
+<pre><code>if (LangOpts.ObjC1) {
+  if (LangOpts.ObjCRuntime.isNonFragile()) {
+    Builder.defineMacro("__OBJC2__");
+</code></pre>
+
+<p>See the git commit for the details, but those are files we patch just to add
+Swifter to the enum:
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/include/clang/Basic/ObjCRuntime.h">ObjCRuntime.h</a>,
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/Basic/ObjCRuntime.cpp">ObjCRuntime.cpp</a>,
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGException.cpp">CGException.cpp</a>,
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCGNU.cpp">CGObjCGNU.cpp</a>,
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CGObjCMac.cpp">CGObjCMac.cpp</a>,
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/CodeGen/CodeGenModule.cpp">CodeGenModule.cpp</a>.</p>
+
+<p>That's it. Add <code>-fobjc-runtime=swifter</code> to the Clang arguments in the Xcode
+scheme.
+This should make Cmd-r properly crash in the abort() call in
+CGObjCSwifterVirtual::ModuleInitFunction.</p>
+
+<p>Great. All the infrastructure is in place now, we 'just' need to generate
+the code :-)</p>
+
+<h4>
+<a id="step-3-add-a-macro-for-conditional-compilation" class="anchor" href="#step-3-add-a-macro-for-conditional-compilation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 3: Add a macro for conditional compilation</h4>
+
+<p>Something easy next. The source should be able to detect whether the Swifter
+runtime is in use. Like that:</p>
+
+<pre><code>#if __SWIFTER_RUNTIME__
++ (BOOL)isActuallySwift { return YES; }
+#elif __NEXT_RUNTIME__
++ (BOOL)isActuallySwift { return KINDA_REALLY_SWIFT; }
+#endif
+</code></pre>
+
+<p>Let's hack this in. Easy enough, this is in
+Clang Libraries / clangFrontend /
+<a href="https://github.com/AlwaysRightInstitute/clang/blob/r36-swifter/lib/Frontend/InitPreprocessor.cpp">InitPreprocessor.cpp</a>. Look for <code>__NEXT_RUNTIME__</code>.</p>
+
+<p>To try whether it works, add some non-sense like</p>
+
+<pre><code>#if __SWIFTER_RUNTIME__
+  always right it is
+#endif
+</code></pre>
+
+<p>to the ~/hack-a-clang/hello.m and Cmd-r in Xcode. This should now stop the
+compiler due to a syntax error, instead of crashing in our abort().</p>
+
+<h3>
+<a id="to-be-continued-" class="anchor" href="#to-be-continued-" aria-hidden="true"><span class="octicon octicon-link"></span></a>To be continued ...</h3>
+
+<p>Continue text here ;-)</p>
+
+<h3>
+<a id="c" class="anchor" href="#c" aria-hidden="true"><span class="octicon octicon-link"></span></a>C++</h3>
+
+<p>Given that you are working on something Objective-C, there is a good chance you
+might miss some C++ basics. And Clang is using pretty much any feature C++
+provides.</p>
+
+<h5>
+<a id="private-namespaces" class="anchor" href="#private-namespaces" aria-hidden="true"><span class="octicon octicon-link"></span></a>private namespaces</h5>
+
+<p>If you see a namespace declaration w/o a name like this:</p>
+
+<pre><code>namespace {
+  ...
+}
+</code></pre>
+
+<p>it creates a 'private' namespace. Think of it like 'static' in C. The contents
+will only be visible in the current translation unit.</p>
+
+<h5>
+<a id="auto" class="anchor" href="#auto" aria-hidden="true"><span class="octicon octicon-link"></span></a>auto</h5>
+
+<p>Let the compiler automatically derive the type, Swift-like. This is
+crap to read as you can't see the type :-) Sample:</p>
+
+<pre><code>ExprAST::dump(out &lt;&lt; "var", ind);
+for (const auto &amp;NamedVar : VarNames) {
+  NamedVar.second-&gt;dump(indent(out, ind) 
+    &lt;&lt; NamedVar.first &lt;&lt; ':', ind + 1);
+}
+</code></pre>
+
+<h5>
+<a id="ampersand-reference-parameters" class="anchor" href="#ampersand-reference-parameters" aria-hidden="true"><span class="octicon octicon-link"></span></a>ampersand reference parameters</h5>
+
+<p>You'll see a lot of objects being passed around by reference. Like:</p>
+
+<pre><code>static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &amp;CGM, ...) {
+  CGM.doThis()
+}
+</code></pre>
+
+<p>Instead of</p>
+
+<pre><code>static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule *CGM, ...) {
+  CGM-&gt;doThat()
+}
+</code></pre>
+
+<p>It's essentially the same.</p>
+
+<h5>
+<a id="constness" class="anchor" href="#constness" aria-hidden="true"><span class="octicon octicon-link"></span></a>const'ness</h5>
+
+<p>There is a lot of it. You know</p>
+
+<pre><code>const char * const ptr;
+</code></pre>
+
+<p>Dangerous <a href="http://en.cppreference.com/w/cpp/language/const_cast">const_cast</a>
+hack-a-round:</p>
+
+<pre><code>void SwifterHackMethodDeclIfNecessary
+  (CodeGen::CodeGenModule &amp;cgm, const ObjCMethodDecl *cmethod)
+{
+  ObjCMethodDecl *method = const_cast&lt;ObjCMethodDecl *&gt;(cmethod);
+}
+</code></pre>
+
+<h5>
+<a id="stdstring" class="anchor" href="#stdstring" aria-hidden="true"><span class="octicon octicon-link"></span></a>std::string</h5>
+
+<p>This is the C++ string class (actually a template instance of
+basic_string). Clang uses additional string objects, StringRef,
+SmallString and Twine.
+Note that C strings automatically cast to std::strings etc.
+When declaring a method argument, use
+<a href="http://llvm.org/docs/ProgrammersManual.html#the-stringref-class">StringRef</a>.</p>
+
+<p>Important method: stdString.c_str(). Gives you the char* string.</p>
+
+<p>Difference to NSString? Plenty. Not usually passed as a reference, but as a
+value object.</p>
+
+<h5>
+<a id="stdpair" class="anchor" href="#stdpair" aria-hidden="true"><span class="octicon octicon-link"></span></a>std::pair</h5>
+
+<p>Just a pair of two objects. Sample:</p>
+
+<pre><code>class VarExprAST : public ExprAST {
+  std::vector&lt;std::pair&lt;std::string, ExprAST *&gt; &gt; VarNames;
+</code></pre>
+
+<p>This is an array of string/ptr pairs.</p>
+
+<h5>
+<a id="stdvector" class="anchor" href="#stdvector" aria-hidden="true"><span class="octicon octicon-link"></span></a>std::vector</h5>
+
+<p>Again, unlike ObjC, usually allocated as a value object. Sample:</p>
+
+<pre><code>std::vector&lt;std::string&gt; titles;
+titles.push_back("Hello");
+titles.push_back("World!");
+for (int i = 0, cnt = titles.size(); i &lt; cnt; i++)
+  printf("title: %s\n", titles[i].c_str());
+</code></pre>
+
+<p>You just have to love C++ ...</p>
+
+<h5>
+<a id="rtti" class="anchor" href="#rtti" aria-hidden="true"><span class="octicon octicon-link"></span></a>RTTI</h5>
+
+<p>It is worth noting that Clang doesn't use C++ RTTI. Instead it has it's own
+dynamic type system. With own 'isa', 'dyn_cast' and 'cast' implementations.</p>
+
+<p>Sample:</p>
+
+<pre><code>if (isa&lt;ObjCMethodDecl&gt;)(this))
+  return false;
+
+// Swift: if let ai as? AllocationInst { } ...
+if (AllocationInst *ai = dyn_cast&lt;AllocationInst&gt;(val))
+  ..
+</code></pre>
+
+<h5>
+<a id="iterators" class="anchor" href="#iterators" aria-hidden="true"><span class="octicon octicon-link"></span></a>Iterators</h5>
+
+<p>Quite honestly I didn't really get them yet. Must be similar to the Swift
+range stuff I assume :-)</p>
+
+<h3>
+<a id="funny-sidenotes" class="anchor" href="#funny-sidenotes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Funny Sidenotes</h3>
+
+<p>Compilation of LLVM and Clang takes a looong time. Working on it feels a lot
+like Unix development in the year 2000. Instead of having instant compiles on
+save, you actually can go and grab a coffee while stuff rebuilds.</p>
+
+<h4>
+<a id="compile-timings" class="anchor" href="#compile-timings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compile Timings</h4>
+
+<p>Machines (all OSX 10.10):</p>
+
+<ul>
+<li>zAir   (MacBook Air non-PCIe, i7 2GHz, 8GB RAM)</li>
+<li>Zini   (Mac Mini Quad Core i7, 16 GB, Software RAID-0 on OWC SSDs)</li>
+<li>ZPro   (can Mac Pro 4-Core D300 32GB 1TB PCIe)</li>
+<li>ZeePro (can Mac Pro 4-Core D300 16GB 512GB PCIe)</li>
+</ul>
+
+<h5>
+<a id="llvm-wo-embedded-clang" class="anchor" href="#llvm-wo-embedded-clang" aria-hidden="true"><span class="octicon octicon-link"></span></a>LLVM (w/o embedded clang)</h5>
+
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Machine</th>
+<th>Real</th>
+<th>User</th>
+<th>Sys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>make -j 16</td>
+<td>Zini</td>
+<td>6m16s</td>
+<td>40m27s</td>
+<td>3m4s</td>
+</tr>
+<tr>
+<td>make -j 16</td>
+<td>ZPro</td>
+<td>5m8s</td>
+<td>34m24</td>
+<td>2m17s</td>
+</tr>
+<tr>
+<td>make -j  8</td>
+<td>ZPro</td>
+<td>5m3s</td>
+<td>31m51s</td>
+<td>2m8s</td>
+</tr>
+<tr>
+<td>make -j  8</td>
+<td>zAir</td>
+<td>11m5s</td>
+<td>38m2s</td>
+<td>2m19s</td>
+</tr>
+<tr>
+<td>make -j  8</td>
+<td>ZeePro</td>
+<td>4m40s</td>
+<td>32m3s</td>
+<td>2m</td>
+</tr>
+</tbody>
+</table>
+
+<h5>
+<a id="clang-1" class="anchor" href="#clang-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Clang</h5>
+
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Machine</th>
+<th>Real</th>
+<th>User</th>
+<th>Sys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>xcodebuild -target clang</td>
+<td>ZPro</td>
+<td>4m32s</td>
+<td>25m18s</td>
+<td>1m57s</td>
+</tr>
+<tr>
+<td>xcodebuild -target clang</td>
+<td>zAir</td>
+<td>9m51s</td>
+<td>30m7s</td>
+<td>2m10s</td>
+</tr>
+<tr>
+<td>make -j 4</td>
+<td>Zini</td>
+<td>4m52s</td>
+<td>17m28s</td>
+<td>1m19s</td>
+</tr>
+<tr>
+<td>xcodebuild -target clang</td>
+<td>ZeePro</td>
+<td>4m26s</td>
+<td>25m28s</td>
+<td>1m48s</td>
+</tr>
+<tr>
+<td>make -j 7</td>
+<td>ZeePro</td>
+<td>4m32s</td>
+<td>29m49s</td>
+<td>2m34s</td>
+</tr>
+</tbody>
+</table>
+
+<h3>
+<a id="why" class="anchor" href="#why" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why?!</h3>
+
+<p>Someone bothered me to do this, and I was actually interested in how all this
+works. So I gave it a try. I'm not actually using any of this.</p>
+
+<h3>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact</h3>
+
+<p><a href="http://twitter.com/helje5">@helje5</a> | <a href="mailto:helge@alwaysrightinstitute.com">helge@alwaysrightinstitute.com</a></p>
+
+<p><img src="http://www.alwaysrightinstitute.com/ARI.png" alt=""></p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
