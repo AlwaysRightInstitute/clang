@@ -455,30 +455,34 @@ save, you actually can go and grab a coffee while stuff rebuilds.
 #### Compile Timings
 
 Machines (all OSX 10.10):
-- zAir   (MacBook Air non-PCIe, i7 2GHz, 8GB RAM)
-- Zini   (Mac Mini Quad Core i7, 16 GB, Software RAID-0 on OWC SSDs)
-- ZPro   (can Mac Pro 4-Core D300 32GB 1TB PCIe)
-- ZeePro (can Mac Pro 4-Core D300 16GB 512GB PCIe)
+- zAir    (MacBook Air non-PCIe, i7 2GHz, 8GB RAM)
+- Zini    (Mac Mini Quad Core i7, 16 GB, Software RAID-0 on OWC SSDs)
+- ZPro    (can Mac Pro 4-Core D300 32GB 1TB PCIe)
+- ZeePro  (can Mac Pro 4-Core D300 16GB 512GB PCIe)
+- ZeeBook (Mac Book 2015 Core-M 1.1 8GB 256GB PCIe)
 
 ##### LLVM (w/o embedded clang)
 
 | Command                  | Machine | Real   | User   | Sys   |
 |--------------------------|---------|--------|--------|-------|
-| make -j 16               | Zini    | 6m16s  | 40m27s | 3m4s  |
-| make -j 16               | ZPro    | 5m8s   | 34m24  | 2m17s |
-| make -j  8               | ZPro    | 5m3s   | 31m51s | 2m8s  |
-| make -j  8               | zAir    | 11m5s  | 38m2s  | 2m19s |
-| make -j  8               | ZeePro  | 4m40s  | 32m3s  | 2m    |
+| make -j 16               | Zini    |  6m16s | 40m27s | 3m 4s |
+| make -j 16               | ZPro    |  5m 8s | 34m24s | 2m17s |
+| make -j  8               | ZPro    |  5m 3s | 31m51s | 2m 8s |
+| make -j  8               | zAir    | 11m 5s | 38m 2s | 2m19s |
+| make -j  8               | ZeePro  |  4m40s | 32m 3s | 2m    |
+| make -j  4               | ZeeBook | 14m 4s | 47m58s | 2m53s |
+
 
 ##### Clang
 
 | Command                  | Machine | Real   | User   | Sys   |
 |--------------------------|---------|--------|--------|-------|
-| xcodebuild -target clang | ZPro    | 4m32s  | 25m18s | 1m57s |
-| xcodebuild -target clang | zAir    | 9m51s  | 30m7s  | 2m10s |
-| make -j 4                | Zini    | 4m52s  | 17m28s | 1m19s |
-| xcodebuild -target clang | ZeePro  | 4m26s  | 25m28s | 1m48s |
-| make -j 7                | ZeePro  | 4m32s  | 29m49s | 2m34s |
+| xcodebuild -target clang | ZPro    |  4m32s | 25m18s | 1m57s |
+| xcodebuild -target clang | zAir    |  9m51s | 30m 7s | 2m10s |
+| make -j 4                | Zini    |  4m52s | 17m28s | 1m19s |
+| xcodebuild -target clang | ZeePro  |  4m26s | 25m28s | 1m48s |
+| make -j 7                | ZeePro  |  4m32s | 29m49s | 2m34s |
+| xcodebuild -target clang | ZeeBook | 19m28s | 52m17s | 3m36s |
 
 
 ###Why?!
